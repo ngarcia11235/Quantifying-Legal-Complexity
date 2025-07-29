@@ -1,6 +1,7 @@
 import sys
 import matplotlib.pyplot as plt
 import math
+import sqlite3
 def main():
     f=open(sys.argv[1])
     dictlist=eval(f.read())
@@ -12,6 +13,9 @@ def main():
     a=input('do you want to make a table(y): ')
     if a=='y':
         tablemaker(dictlist)
+    a=input('do you want to make a database(y): ')
+    if a=='y':
+        dbmaker(dictlist)   
 def graphmaker(dictlist):
     c1=input('do you want a graph(y): ')
     while c1=='y':
@@ -80,6 +84,20 @@ def histmaker(dictlist):
 def tablemaker(dictlist):
     print('ref','|','level','|','words','|','awl','|','nsub','|','nve','|','cfc')
     for x in dictlist:
-        print(dictlist[x]['locdict']['ref'],(' '*(10-len(str(dictlist[x]['locdict']['ref'])))),'|',dictlist[x]['locdict']['level'],(' '*(15-len(str(dictlist[x]['locdict']['level'])))),'|',dictlist[x]['infodict']['words'],(' '*(7-len(str(dictlist[x]['infodict']['words'])))),'|',dictlist[x]['infodict']['awl'],(' '*(7-len(str(dictlist[x]['infodict']['awl'])))),'|',dictlist[x]['infodict']['nsub'],(' '*(3-len(str(dictlist[x]['infodict']['nsub'])))),'|',dictlist[x]['infodict']['nve'],(' '*(7-len(str(dictlist[x]['infodict']['nve'])))),'|',dictlist[x]['infodict']['cfc'],(' '*(7-len(str(dictlist[x]['infodict']['cfc'])))))
-        print('------------+------------------+----------+----------+------+----------+----------')
+        print(dictlist[x]['locdict']['ref'],(' '*(10-len(str(dictlist[x]['locdict']['ref'])))),'|',dictlist[x]['locdict']['level'],(' '*(15-len(str(dictlist[x]['locdict']['level'])))),'|',dictlist[x]['infodict']['words'],(' '*(7-len(str(dictlist[x]['infodict']['words'])))),'|',dictlist[x]['infodict']['awl'],(' '*(8-len(str(dictlist[x]['infodict']['awl'])))),'|',dictlist[x]['infodict']['nsub'],(' '*(3-len(str(dictlist[x]['infodict']['nsub'])))),'|',dictlist[x]['infodict']['nve'],(' '*(7-len(str(dictlist[x]['infodict']['nve'])))),'|',dictlist[x]['infodict']['cfc'],(' '*(7-len(str(dictlist[x]['infodict']['cfc'])))))
+        print('------------+------------------+----------+-----------+------+----------+----------')
+def dbmaker(dictlist):
+    con=sqlite3.connect('dictionary_table')
+    cur=con.cursor()
+    cur.execute("CREATE TABLE IF NOT EXISTS stats(ref,level,words,awl,nsub,nve,cfc,textunits)")
+    cur.execute('DELETE FROM stats')
+    data=[]
+    for x in dictlist:
+        info=[dictlist[x]['locdict']['ref'],dictlist[x]['locdict']['level']]
+        for y in dictlist[x]['infodict']:
+            info.append(dictlist[x]['infodict'][y])
+        data.append(info)
+    for x in data:
+        cur.execute("INSERT INTO stats VALUES(?,?,?,?,?,?,?,?)",x)
+    con.commit()
 main()

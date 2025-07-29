@@ -137,7 +137,7 @@ def infoget(dictlist):
             text+=dictlist[x]["locdict"]['name']
             text+=' '
         elif x==0:
-            dictlist[0]["infodict"]={'words':805042,'awl':6.649753677447885,'nsub':50,'nve':0.77835244855424,'cfc':3.130901366621497}
+            dictlist[0]["infodict"]={'words':805042,'awl':6.649753677447885,'nsub':50,'nve':0.77835244855424,'cfc':3.130901366621497,'textunits':21055}
             skip=1
         else:
             subs=dictlist[x]["locdict"]["sub"]
@@ -152,7 +152,10 @@ def infoget(dictlist):
                         a=1
                     else:
                         subs2.extend(dictlist[y]["locdict"]['sub'])
-                subs=subs2.copy()
+                subs=[]
+                for y in subs2:
+                    if y not in subs:
+                        subs.append(y)
                 subs2=[]
         if len(clearn(text))==0:
             skip=1
