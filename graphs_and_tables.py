@@ -1,12 +1,19 @@
 import sys
 import matplotlib.pyplot as plt
+import math
 def main():
     f=open(sys.argv[1])
     dictlist=eval(f.read())
     graphmaker(dictlist)
-    histmaker(dictlist)
+    a=input('do you want to make a histogram(y): ')
+    while a=='y':
+        histmaker(dictlist)
+        a=input('do you want to make a histogram(y): ')
+    a=input('do you want to make a table(y): ')
+    if a=='y':
+        tablemaker(dictlist)
 def graphmaker(dictlist):
-    c1=input('do you want a graph?')
+    c1=input('do you want a graph(y): ')
     while c1=='y':
         c2=input('first variable?')
         c3=input('second variable?')
@@ -39,7 +46,7 @@ def graphmaker(dictlist):
                     g2.append((dictlist[x]['infodict'][c3]))
             plt.scatter((g1),(g2),s=10,c='r',marker='*')
         plt.show()
-        c1=input('do you want a new graph?')
+        c1=input('do you want a new graph(y): ')
     if c1=='all':
         var=['words','awl','nve','cfc','nsub']
         fig = plt.figure()
@@ -65,9 +72,14 @@ def histmaker(dictlist):
     stat=[]
     for x in dictlist:
         if dictlist[x]['locdict']['level']==level:
-            name.append(dictlist[x]['locdict']['name'])
+            name.append(dictlist[x]['locdict']['ref'])
             stat.append(dictlist[x]['infodict'][data])
             a+=1
     plt.bar(name,stat)
     plt.show()
+def tablemaker(dictlist):
+    print('ref','|','level','|','words','|','awl','|','nsub','|','nve','|','cfc')
+    for x in dictlist:
+        print(dictlist[x]['locdict']['ref'],(' '*(10-len(str(dictlist[x]['locdict']['ref'])))),'|',dictlist[x]['locdict']['level'],(' '*(15-len(str(dictlist[x]['locdict']['level'])))),'|',dictlist[x]['infodict']['words'],(' '*(7-len(str(dictlist[x]['infodict']['words'])))),'|',dictlist[x]['infodict']['awl'],(' '*(7-len(str(dictlist[x]['infodict']['awl'])))),'|',dictlist[x]['infodict']['nsub'],(' '*(3-len(str(dictlist[x]['infodict']['nsub'])))),'|',dictlist[x]['infodict']['nve'],(' '*(7-len(str(dictlist[x]['infodict']['nve'])))),'|',dictlist[x]['infodict']['cfc'],(' '*(7-len(str(dictlist[x]['infodict']['cfc'])))))
+        print('------------+------------------+----------+----------+------+----------+----------')
 main()

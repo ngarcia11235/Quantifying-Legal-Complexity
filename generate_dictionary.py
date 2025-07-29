@@ -10,6 +10,10 @@ def main():
     dictlist=dictget(c[0],c[1],c[2])
     dictlist=dualparsall(dictlist)
     dictlist=infoget(dictlist)
+    sorted_items = sorted(dictlist.items(), key=lambda item: item[1]['locdict']['ref'])
+    dictlist = dict(sorted_items)
+    sorted_items = sorted(dictlist.items(), key=lambda item: item[1]['locdict']['level'])
+    dictlist = dict(sorted_items)
     print(dictlist)
 def setup():
     filename=sys.argv[1]
@@ -219,35 +223,11 @@ def compcalc(words):
     lencomp=len(gzip.compress(bytx))
     compfact=lenword/lencomp
     return compfact
-def dualparse(dictlist):
-    #level1=int(input('0=section,1=book:'))
-    #level2=int(input('3=ref book,4=work,5=jurist,6=time:'))
-    expdict={3:4,4:3,5:2,6:2}
-    namedict={0:'section',1:'book',3:'refbook',4:'work',5:'jurist',6:'time'}
-    level=namedict[level1]+'/'+namedict[level2]
-    newdict=dictlist.copy()
-    for x in dictlist:
-        if dictlist[x]['locdict']['level']=='passage':
-            id1=dictlist[x]['locdict']['supers'][level1]
-            id2=-dictlist[x]['locdict']['supers'][level2]
-            id0=((int(id1)*(10**expdict[level2]))+int(id2)+(id1-int(id1)+(id2-int(id2))/10))
-            name=dictlist[id1]['locdict']['name']+'/'+dictlist[-id2]['locdict']['name']
-            if id0 not in newdict:
-                newdict[id0]={"infodict":{"words":0,"awl":0, "nsub":0, "nve":0, "cfc":0},
-                          "locdict":{"level":level,"name":name,"supers":[],"sub":[x],"ref":id0}}
-                newdict[id0]['locdict']['sub'].append(x)
-                newdict[x]['locdict']['sub'].append(id0)
-            elif x not in newdict[id0]['locdict']['sub']:
-                newdict[id0]['locdict']['sub'].append(x)
-                newdict[x]['locdict']['sub'].append(id0)
-    newdict=dict(sorted(newdict.items()))
-    return newdict
 def dualparsall(dictlist):
     expdict={3:4,4:3,5:2,6:2}
     namedict={0:'section',1:'book',3:'refbook',4:'work',5:'jurist',6:'time'}
     newdict=dictlist.copy()
-    for level1 in range(1):
-        level1+=1
+    for level1 in range(0,2):
         for level2 in range(3,7):
             level=namedict[level1]+'/'+namedict[level2]
             for x in dictlist:
