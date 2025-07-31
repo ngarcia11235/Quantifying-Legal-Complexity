@@ -5,16 +5,18 @@ import gzip
 import sqlite3
 import collections
 import json
-def main():
+def main1():
     text,c=setup()
     dictlist=dictget(c[0],c[1],c[2])
     dictlist=dualparsall(dictlist)
     dictlist=infoget(dictlist)
-    sorted_items = sorted(dictlist.items(), key=lambda item: item[1]['locdict']['ref'])
+    sorted_items = sorted(dictlist.items(), key=lambda item: -item[1]['locdict']['ref'])
     dictlist = dict(sorted_items)
     sorted_items = sorted(dictlist.items(), key=lambda item: item[1]['locdict']['level'])
     dictlist = dict(sorted_items)
-    print(dictlist)
+    dictlist=infoget(dictlist)
+    return dictlist
+
 def setup():
     filename=sys.argv[1]
     conn=sqlite3.connect(filename)
@@ -24,6 +26,7 @@ def setup():
     text=getext(cur)
     c=cur,cur1,cur2
     return text,c
+
 def dictget(cur,cur1,cur2):
     refddict={"infodict":{"words":0,"awl":0, "nsub":0, "nve":0, "cfc":0,'textunits':0},
     "locdict":{"level":"","name":"","supers":'',"sub":[],"ref":0}}
@@ -115,6 +118,7 @@ def dictget(cur,cur1,cur2):
             if id4 not in dictlist[y]['locdict']['supers']:
                 dictlist[y]['locdict']['supers'].extend([id4,id3,id2,id1])
     return dictlist
+
 def infoget(dictlist):
     i=0
     txts=0
@@ -130,12 +134,6 @@ def infoget(dictlist):
             text+=dictlist[x]["locdict"]['name']
             text+=' '
             txts+=1
-            nonsup=[]
-            for y in dictlist[x]["locdict"]['supers']:
-                if y not in nonsup:
-                    if dictlist[y]['infodict']['textunits']!='n/a':
-                        dictlist[y]['infodict']['textunits']+=1
-                        nonsup.append(y)
         elif x==0:
             dictlist[0]["infodict"]={'words':805042,'awl':6.649753677447885,'nsub':50,'nve':0.77835244855424,'cfc':3.130901366621497,'textunits':dictlist[0]['infodict']['textunits']}
             skip=1
@@ -145,10 +143,12 @@ def infoget(dictlist):
                 i2=0
                 for y in subs:
                     i2+=1
+                    print(x,y,dictlist[x]['locdict']['sub'])
                     if dictlist[y]["locdict"]["sub"]=='NONE':
                         text+=dictlist[y]["locdict"]['name']
                         text+=' '
                         a=1
+                        dictlist[x]['infodict']['textunits']+=1
                     else:
                         subs2.extend(dictlist[y]["locdict"]['sub'])
                 subs=[]
@@ -161,18 +161,23 @@ def infoget(dictlist):
         if skip!=1:
             words=clearn(text)
             newfreq(words.copy())
+            dictlist[x]['infodict']['nsub']=len(dictlist[x]['locdict']['sub'])
+            if dictlist[x]['infodict']['nsub']==2:
+                print(dictlist[x]['locdict']['sub'])
             dictlist[x]["infodict"]["words"]=len(words)
             dictlist[x]["infodict"]["awl"]=round(len(text)/len(words),5)
             dictlist[x]["infodict"]["nve"]=round(entropy(newfreq(words.copy()),words),5)
             dictlist[x]["infodict"]["cfc"]=round(compcalc(words),5)
     return dictlist
-    #for each level for each sub...collect base level units->save in text variable... run analysis on text -> alter infodict -> 
+    #for each level for each sub...collect base level units->save in text variable... run analysis on text -> alter infodict ->
+    
 def getext(cur):# extracts and returns text from database 
     s=''
     for row in cur.execute('SELECT * FROM text ORDER BY book_no'):
         s+=row[1]
         s+=' '
     return s
+
 def clearn(text):
     # cleans up the input and returns a more usable text
     newword=''
@@ -192,6 +197,7 @@ def clearn(text):
                 wordlist.append(newword)
             newword=''
     return wordlist
+
 def newfreq(word3):
     word3.sort()
     worf=collections.Counter(word3)
@@ -199,6 +205,7 @@ def newfreq(word3):
     for x in worf:
         worf1.append(worf[x])
     return worf1
+
 def entropy(worf,words):
     # does  entropy calculation and returns normalized shannon entropy
     wordent=[]
@@ -214,6 +221,7 @@ def entropy(worf,words):
             normshanent+=x/math.log2(len(worf))
         else: normshanent=0
     return normshanent
+
 def compcalc(words):
     # compresses the text and returns compression factor
     x=''
@@ -225,6 +233,7 @@ def compcalc(words):
     lencomp=len(gzip.compress(bytx))
     compfact=lenword/lencomp
     return compfact
+
 def dualparsall(dictlist):
     expdict={3:4,4:3,5:2,6:2}
     namedict={0:'section',1:'book',3:'refbook',4:'work',5:'jurist',6:'time'}
@@ -241,6 +250,8 @@ def dualparsall(dictlist):
                     if id0 not in newdict:
                         newdict[id0]={"infodict":{"words":0,"awl":0, "nsub":0, "nve":0, "cfc":0,'textunits':0},
                           "locdict":{"level":level,"name":name,"supers":[],"sub":[x],"ref":id0}}
+                        newdict[id0]['locdict']['sub'].append(x)
+                        newdict[x]['locdict']['supers'].append(id0)
                     if x not in newdict[id0]['locdict']['sub']:
                         newdict[id0]['locdict']['sub'].append(x)
                         newdict[x]['locdict']['supers'].append(id0)
@@ -248,7 +259,120 @@ def dualparsall(dictlist):
         if newdict[x]['locdict']['level']=='passage':
             for y in newdict[x]['locdict']['sub']:
                 newdict[y]['locdict']['supers']=[x]
-                newdict[y]['locdict']['supers'].extend(newdict[x]['locdict']['sub'])
+                newdict[y]['locdict']['supers'].extend(newdict[x]['locdict']['supers'])
+        if len(newdict[x]['locdict']['sub'])==0:
+            print('???')
     newdict=dict(sorted(newdict.items()))
+    for x in newdict:
+        newdict[x]['locdict']['sub']=list(set(newdict[x]['locdict']['sub']))
     return newdict
-main()
+dictlist=main1()
+#==================================================================
+#==================================================================
+import sys
+import matplotlib.pyplot as plt
+import math
+import sqlite3
+def main2(dictlist):
+    graphmaker(dictlist)
+    a=input('do you want to make a histogram(y): ')
+    while a=='y':
+        histmaker(dictlist)
+        a=input('do you want to make a histogram(y): ')
+    a=input('do you want to make a table(y): ')
+    if a=='y':
+        tablemaker(dictlist)
+    a=input('do you want to make a database(y): ')
+    if a=='y':
+        dbmaker(dictlist)
+        
+def graphmaker(dictlist):
+    c1=input('do you want a graph(y): ')
+    while c1=='y':
+        c2=input('first variable?')
+        c3=input('second variable?')
+        mult=input('multilevel?')
+        c4=input('level')
+        g1=[]
+        g2=[]
+        if mult=='multilevel':
+            fig = plt.figure()
+            ax1 = fig.add_subplot(111)
+            g1=[]
+            g2=[]
+            col=input('color')
+            mar=input('shape')
+            for x in dictlist:
+                if dictlist[x]['locdict']['level']==c4:
+                    g1.append(math.log(dictlist[x]['infodict'][c2]+1,10))
+                    g2.append((dictlist[x]['infodict'][c3]))
+            ax1.scatter((g1),(g2),s=10,c=col,marker=mar)
+            c4=input('level')
+        elif c4=='all':
+            for x in dictlist:
+                g1.append(math.log(dictlist[x]['infodict'][c2]+1,10))
+                g2.append((dictlist[x]['infodict'][c3]))
+            plt.scatter((g1),(g2),s=10,c='r',marker='*')
+        else:
+            for x in dictlist:
+                if dictlist[x]['locdict']['level']==c4:
+                    g1.append(math.log(dictlist[x]['infodict'][c2]+1,10))
+                    g2.append((dictlist[x]['infodict'][c3]))
+            plt.scatter((g1),(g2),s=10,c='r',marker='*')
+        plt.show()
+        c1=input('do you want a new graph(y): ')
+    if c1=='all':
+        var=['words','awl','nve','cfc','nsub']
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        level={'digest':['r','*'], 'time':['g','*'], 'jurist':['g','o'], 'work':['g','s'], 'referance book':['g','+'], 'book':['y','^'], 'section':['y','s'], 'passage':['b','>']}
+        for c2 in var:
+            for c3 in var:
+                g1=[]
+                g2=[]
+                for x in level:
+                    print(x)
+                    for y in dictlist:
+                        if dictlist[y]['locdict']['level']==x:
+                            g1.append(dictlist[y]['infodict'][c2])
+                            g2.append(dictlist[y]['infodict'][c3])
+                    ax1.scatter((g1),(g2),s=10,c=level[x][0],marker=level[x][1])
+        plt.show()
+        
+def histmaker(dictlist):
+    level=input('level: ')
+    data=input('data: ')
+    name=[]
+    a=1
+    stat=[]
+    for x in dictlist:
+        if dictlist[x]['locdict']['level']==level:
+            name.append(dictlist[x]['locdict']['name'])
+            stat.append(dictlist[x]['infodict'][data])
+            a+=1
+    plt.bar(name,stat)
+    plt.show()
+def tablemaker(dictlist):
+    print('ref','|','level','|','words','|','awl','|','nsub','|','nve','|','cfc')
+    for x in dictlist:
+        print(dictlist[x]['locdict']['ref'],(' '*(10-len(str(dictlist[x]['locdict']['ref'])))),'|',dictlist[x]['locdict']['level'],(' '*(15-len(str(dictlist[x]['locdict']['level'])))),'|',dictlist[x]['infodict']['words'],(' '*(7-len(str(dictlist[x]['infodict']['words'])))),'|',dictlist[x]['infodict']['awl'],(' '*(8-len(str(dictlist[x]['infodict']['awl'])))),'|',dictlist[x]['infodict']['nsub'],(' '*(3-len(str(dictlist[x]['infodict']['nsub'])))),'|',dictlist[x]['infodict']['nve'],(' '*(7-len(str(dictlist[x]['infodict']['nve'])))),'|',dictlist[x]['infodict']['cfc'],(' '*(7-len(str(dictlist[x]['infodict']['cfc'])))))
+        print('------------+------------------+----------+-----------+------+----------+----------')
+        
+def dbmaker(dictlist):
+    con=sqlite3.connect('dictionary_table.db')
+    cur=con.cursor()
+    cur.execute("CREATE TABLE IF NOT EXISTS stats(ref,level,words,awl,nsub,nve,cfc,textunits)")
+    cur.execute('DELETE FROM stats')
+    data=[]
+    for x in dictlist:
+        info=[dictlist[x]['locdict']['ref'],dictlist[x]['locdict']['level']]
+        for y in dictlist[x]['infodict']:
+            info.append(dictlist[x]['infodict'][y])
+        data.append(info)
+    for x in data:
+        cur.execute("INSERT INTO stats VALUES(?,?,?,?,?,?,?,?)",x)
+    con.commit()
+are=0
+while are!='yes':
+    main2(dictlist)
+    are=input('are you done: ')

@@ -4,6 +4,7 @@ import math
 import sqlite3
 def main():
     f=open(sys.argv[1])
+    print(eval(f.read()))
     dictlist=eval(f.read())
     graphmaker(dictlist)
     a=input('do you want to make a histogram(y): ')
@@ -87,7 +88,7 @@ def tablemaker(dictlist):
         print(dictlist[x]['locdict']['ref'],(' '*(10-len(str(dictlist[x]['locdict']['ref'])))),'|',dictlist[x]['locdict']['level'],(' '*(15-len(str(dictlist[x]['locdict']['level'])))),'|',dictlist[x]['infodict']['words'],(' '*(7-len(str(dictlist[x]['infodict']['words'])))),'|',dictlist[x]['infodict']['awl'],(' '*(8-len(str(dictlist[x]['infodict']['awl'])))),'|',dictlist[x]['infodict']['nsub'],(' '*(3-len(str(dictlist[x]['infodict']['nsub'])))),'|',dictlist[x]['infodict']['nve'],(' '*(7-len(str(dictlist[x]['infodict']['nve'])))),'|',dictlist[x]['infodict']['cfc'],(' '*(7-len(str(dictlist[x]['infodict']['cfc'])))))
         print('------------+------------------+----------+-----------+------+----------+----------')
 def dbmaker(dictlist):
-    con=sqlite3.connect('dictionary_table')
+    con=sqlite3.connect('dictionary_table.db')
     cur=con.cursor()
     cur.execute("CREATE TABLE IF NOT EXISTS stats(ref,level,words,awl,nsub,nve,cfc,textunits)")
     cur.execute('DELETE FROM stats')
