@@ -58,8 +58,9 @@ def dictget(cur,cur1,cur2):
             dictlist[id3]["infodict"]['nsub']+=1
             dictlist[id4]={"infodict":{"words":0,"awl":0, "nsub":0, "nve":0, "cfc":0,'textunits':'n/a'},
                           "locdict":{"level":"textunit","name":row[1],"supers":[id3,id2,id1,0],"sub":"NONE","ref":id4}}
+            
     #----------------------------------------------------------------------------------------------------------
-    dictlist[0]={"infodict":{"words":0,"awl":0, "nsub":0, "nve":0, "cfc":0},
+    dictlist[0]={"infodict":{"words":0,"awl":0, "nsub":0, "nve":0, "cfc":0,'textunits':0},
                  "locdict":{"level":"digest","name":"digest","supers":"NONE","sub":[],"ref":0}}
     for x in range(50):
         dictlist[0]["locdict"]["sub"].append(x+1.1)
@@ -143,7 +144,7 @@ def infoget(dictlist):
                 i2=0
                 for y in subs:
                     i2+=1
-                    print(x,y,dictlist[x]['locdict']['sub'])
+                    print(y,dictlist[y]['locdict']['sub'])
                     if dictlist[y]["locdict"]["sub"]=='NONE':
                         text+=dictlist[y]["locdict"]['name']
                         text+=' '
@@ -264,11 +265,15 @@ def dualparsall(dictlist):
             print('???')
     newdict=dict(sorted(newdict.items()))
     for x in newdict:
-        newdict[x]['locdict']['sub']=list(set(newdict[x]['locdict']['sub']))
+        if newdict[x]['locdict']['level']!='textunit':
+            newdict[x]['locdict']['sub']=list(set(newdict[x]['locdict']['sub']))
     return newdict
 dictlist=main1()
+
 #==================================================================
 #==================================================================
+#==================================================================
+
 import sys
 import matplotlib.pyplot as plt
 import math
