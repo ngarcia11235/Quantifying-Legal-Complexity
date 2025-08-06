@@ -144,7 +144,6 @@ def infoget(dictlist):
                 i2=0
                 for y in subs:
                     i2+=1
-                    print(y,dictlist[y]['locdict']['sub'])
                     if dictlist[y]["locdict"]["sub"]=='NONE':
                         text+=dictlist[y]["locdict"]['name']
                         text+=' '
@@ -163,8 +162,6 @@ def infoget(dictlist):
             words=clearn(text)
             newfreq(words.copy())
             dictlist[x]['infodict']['nsub']=len(dictlist[x]['locdict']['sub'])
-            if dictlist[x]['infodict']['nsub']==2:
-                print(dictlist[x]['locdict']['sub'])
             dictlist[x]["infodict"]["words"]=len(words)
             dictlist[x]["infodict"]["awl"]=round(len(text)/len(words),5)
             dictlist[x]["infodict"]["nve"]=round(entropy(newfreq(words.copy()),words),5)
@@ -261,8 +258,6 @@ def dualparsall(dictlist):
             for y in newdict[x]['locdict']['sub']:
                 newdict[y]['locdict']['supers']=[x]
                 newdict[y]['locdict']['supers'].extend(newdict[x]['locdict']['supers'])
-        if len(newdict[x]['locdict']['sub'])==0:
-            print('???')
     newdict=dict(sorted(newdict.items()))
     for x in newdict:
         if newdict[x]['locdict']['level']!='textunit':
@@ -336,7 +331,6 @@ def graphmaker(dictlist):
                 g1=[]
                 g2=[]
                 for x in level:
-                    print(x)
                     for y in dictlist:
                         if dictlist[y]['locdict']['level']==x:
                             g1.append(dictlist[y]['infodict'][c2])

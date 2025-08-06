@@ -10,10 +10,11 @@ def main():
     dictlist=dictget(c[0],c[1],c[2])
     dictlist=dualparsall(dictlist)
     dictlist=infoget(dictlist)
-    sorted_items = sorted(dictlist.items(), key=lambda item: item[1]['locdict']['ref'])
+    sorted_items = sorted(dictlist.items(), key=lambda item: -item[1]['locdict']['ref'])
     dictlist = dict(sorted_items)
     sorted_items = sorted(dictlist.items(), key=lambda item: item[1]['locdict']['level'])
     dictlist = dict(sorted_items)
+    dictlist=infoget(dictlist)
     print(dictlist)
 def setup():
     filename=sys.argv[1]
@@ -24,6 +25,7 @@ def setup():
     text=getext(cur)
     c=cur,cur1,cur2
     return text,c
+
 def dictget(cur,cur1,cur2):
     refddict={"infodict":{"words":0,"awl":0, "nsub":0, "nve":0, "cfc":0,'textunits':0},
     "locdict":{"level":"","name":"","supers":'',"sub":[],"ref":0}}
@@ -55,8 +57,9 @@ def dictget(cur,cur1,cur2):
             dictlist[id3]["infodict"]['nsub']+=1
             dictlist[id4]={"infodict":{"words":0,"awl":0, "nsub":0, "nve":0, "cfc":0,'textunits':'n/a'},
                           "locdict":{"level":"textunit","name":row[1],"supers":[id3,id2,id1,0],"sub":"NONE","ref":id4}}
+            
     #----------------------------------------------------------------------------------------------------------
-    dictlist[0]={"infodict":{"words":0,"awl":0, "nsub":0, "nve":0, "cfc":0},
+    dictlist[0]={"infodict":{"words":0,"awl":0, "nsub":0, "nve":0, "cfc":0,'textunits':0},
                  "locdict":{"level":"digest","name":"digest","supers":"NONE","sub":[],"ref":0}}
     for x in range(50):
         dictlist[0]["locdict"]["sub"].append(x+1.1)
@@ -115,6 +118,7 @@ def dictget(cur,cur1,cur2):
             if id4 not in dictlist[y]['locdict']['supers']:
                 dictlist[y]['locdict']['supers'].extend([id4,id3,id2,id1])
     return dictlist
+
 def infoget(dictlist):
     i=0
     txts=0
@@ -130,12 +134,6 @@ def infoget(dictlist):
             text+=dictlist[x]["locdict"]['name']
             text+=' '
             txts+=1
-            nonsup=[]
-            for y in dictlist[x]["locdict"]['supers']:
-                if y not in nonsup:
-                    if dictlist[y]['infodict']['textunits']!='n/a':
-                        dictlist[y]['infodict']['textunits']+=1
-                        nonsup.append(y)
         elif x==0:
             dictlist[0]["infodict"]={'words':805042,'awl':6.649753677447885,'nsub':50,'nve':0.77835244855424,'cfc':3.130901366621497,'textunits':dictlist[0]['infodict']['textunits']}
             skip=1
@@ -149,6 +147,7 @@ def infoget(dictlist):
                         text+=dictlist[y]["locdict"]['name']
                         text+=' '
                         a=1
+                        dictlist[x]['infodict']['textunits']+=1
                     else:
                         subs2.extend(dictlist[y]["locdict"]['sub'])
                 subs=[]
@@ -161,18 +160,21 @@ def infoget(dictlist):
         if skip!=1:
             words=clearn(text)
             newfreq(words.copy())
+            dictlist[x]['infodict']['nsub']=len(dictlist[x]['locdict']['sub'])
             dictlist[x]["infodict"]["words"]=len(words)
             dictlist[x]["infodict"]["awl"]=round(len(text)/len(words),5)
             dictlist[x]["infodict"]["nve"]=round(entropy(newfreq(words.copy()),words),5)
             dictlist[x]["infodict"]["cfc"]=round(compcalc(words),5)
     return dictlist
-    #for each level for each sub...collect base level units->save in text variable... run analysis on text -> alter infodict -> 
+    #for each level for each sub...collect base level units->save in text variable... run analysis on text -> alter infodict ->
+    
 def getext(cur):# extracts and returns text from database 
     s=''
     for row in cur.execute('SELECT * FROM text ORDER BY book_no'):
         s+=row[1]
         s+=' '
     return s
+
 def clearn(text):
     # cleans up the input and returns a more usable text
     newword=''
@@ -192,6 +194,7 @@ def clearn(text):
                 wordlist.append(newword)
             newword=''
     return wordlist
+
 def newfreq(word3):
     word3.sort()
     worf=collections.Counter(word3)
@@ -199,6 +202,7 @@ def newfreq(word3):
     for x in worf:
         worf1.append(worf[x])
     return worf1
+
 def entropy(worf,words):
     # does  entropy calculation and returns normalized shannon entropy
     wordent=[]
@@ -214,6 +218,7 @@ def entropy(worf,words):
             normshanent+=x/math.log2(len(worf))
         else: normshanent=0
     return normshanent
+
 def compcalc(words):
     # compresses the text and returns compression factor
     x=''
@@ -225,6 +230,7 @@ def compcalc(words):
     lencomp=len(gzip.compress(bytx))
     compfact=lenword/lencomp
     return compfact
+
 def dualparsall(dictlist):
     expdict={3:4,4:3,5:2,6:2}
     namedict={0:'section',1:'book',3:'refbook',4:'work',5:'jurist',6:'time'}
@@ -241,6 +247,8 @@ def dualparsall(dictlist):
                     if id0 not in newdict:
                         newdict[id0]={"infodict":{"words":0,"awl":0, "nsub":0, "nve":0, "cfc":0,'textunits':0},
                           "locdict":{"level":level,"name":name,"supers":[],"sub":[x],"ref":id0}}
+                        newdict[id0]['locdict']['sub'].append(x)
+                        newdict[x]['locdict']['supers'].append(id0)
                     if x not in newdict[id0]['locdict']['sub']:
                         newdict[id0]['locdict']['sub'].append(x)
                         newdict[x]['locdict']['supers'].append(id0)
@@ -248,7 +256,10 @@ def dualparsall(dictlist):
         if newdict[x]['locdict']['level']=='passage':
             for y in newdict[x]['locdict']['sub']:
                 newdict[y]['locdict']['supers']=[x]
-                newdict[y]['locdict']['supers'].extend(newdict[x]['locdict']['sub'])
+                newdict[y]['locdict']['supers'].extend(newdict[x]['locdict']['supers'])
     newdict=dict(sorted(newdict.items()))
+    for x in newdict:
+        if newdict[x]['locdict']['level']!='textunit':
+            newdict[x]['locdict']['sub']=list(set(newdict[x]['locdict']['sub']))
     return newdict
 main()
